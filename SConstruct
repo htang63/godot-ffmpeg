@@ -135,9 +135,11 @@ if env["dev_build"]:
 
 cpp_library += "." + str(env_arch)
 
+arch = "x86_64"
+
 # make sure our binding library is properly includes
-env.Append(LIBPATH=["#$ffmpeg_path/lib", cpp_bindings_path + "bin/"])
-env.Append(CPPPATH=["#$ffmpeg_path/include", godot_headers_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/"])
+env.Append(LIBPATH=["lib/" + env["platform"] + "/" + arch + "/lib","#$ffmpeg_path/lib", cpp_bindings_path + "bin/"])
+env.Append(CPPPATH=["lib/" + env["platform"] + "/" + arch + "/include","#$ffmpeg_path/include", godot_headers_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/"])
 env.Append(LIBS=[cpp_library])
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
