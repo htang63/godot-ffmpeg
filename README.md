@@ -6,8 +6,11 @@ git submodule update --init --recursive
 cd ffmpeg_build_scripts
 ./[Platform Name].sh
 
+cd ../godot-cpp
+scons target=template_debug generate_bindings=yes dev_build=yes
+
 cd ..
-scons target=release
+scons target=debug dev_build=yes
 ```
 # Windows
 
