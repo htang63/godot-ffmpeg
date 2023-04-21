@@ -9,7 +9,7 @@
 
 using namespace godot;
 
-void initialize_example_module(ModuleInitializationLevel p_level) {
+void initialize_ffmpeg_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
@@ -17,18 +17,18 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
     ClassDB::register_class<FFmpegNode>();
 }
 
-void uninitialize_example_module(ModuleInitializationLevel p_level) {
+void uninitialize_ffmpeg_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
 }
 
 extern "C" {
-	GDExtensionBool  GDN_EXPORT init(const GDExtensionInterface  *p_interface, const GDExtensionClassLibraryPtr  p_library, GDExtensionInitialization  *r_initialization) {
+	GDExtensionBool  GDN_EXPORT ffmpeg_library_init(const GDExtensionInterface  *p_interface, const GDExtensionClassLibraryPtr  p_library, GDExtensionInitialization  *r_initialization) {
 		godot::GDExtensionBinding::InitObject init_obj(p_interface, p_library, r_initialization);
 
-		init_obj.register_initializer(initialize_example_module);
-		init_obj.register_terminator(uninitialize_example_module);
+		init_obj.register_initializer(initialize_ffmpeg_module);
+		init_obj.register_terminator(uninitialize_ffmpeg_module);
 		init_obj.set_minimum_library_initialization_level(MODULE_INITIALIZATION_LEVEL_SCENE);
 
 		return init_obj.init();

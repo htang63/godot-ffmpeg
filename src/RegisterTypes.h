@@ -1,7 +1,7 @@
-#ifndef GDEXAMPLE_REGISTER_TYPES_H
-#define GDEXAMPLE_REGISTER_TYPES_H
+#ifndef GDFFMPEG_REGISTER_TYPES_H
+#define GDFFMPEG_REGISTER_TYPES_H
 
-void initialize_example_module();
-void uninitialize_example_module();
+void initialize_ffmpeg_module();
+void uninitialize_ffmpeg_module();
 
-#endif // GDEXAMPLE_REGISTER_TYPES_H
+#endif // GDFFMPEG_REGISTER_TYPES_H
