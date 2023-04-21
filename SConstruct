@@ -29,6 +29,8 @@ opts.Add(EnumVariable("bits", "Target platform bits", "64", ("32", "64")))
 opts.Add(BoolVariable("dev_build", "Debug symbols", "yes"))
 opts.Add("ffmpeg_path", "Path to precompiled ffmpeg library", "ffmpeg")
 
+opts.Update(env)
+
 if env['platform'] == "windows" and not env["use_mingw"]:
     env.msvc = True
 else:
@@ -42,7 +44,6 @@ cpp_library = "libgodot-cpp"
 # only support 64 at this time..
 bits = 64
 
-opts.Update(env)
 # Generates help for the -h scons option.
 Help(opts.GenerateHelpText(env))
 
