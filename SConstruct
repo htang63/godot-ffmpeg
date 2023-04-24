@@ -26,6 +26,7 @@ opts.Add(
     EnumVariable("p", "Compilation target, alias for 'platform'", host_platform, ["", "windows", "x11", "linux", "osx"])
 )
 opts.Add(EnumVariable("bits", "Target platform bits", "64", ("32", "64")))
+opts.Add(BoolVariable("use_llvm", "Use the LLVM / Clang compiler", "no"))
 opts.Add(BoolVariable("dev_build", "Debug symbols", "yes"))
 
 opts.Update(env)
@@ -104,6 +105,11 @@ if host_platform == "windows" and env["platform"] != "android":
         env['msvc_arch'] = 'X86'
     opts.Update(env)
 
+# Process some arguments
+if env["use_llvm"]:
+    env["CC"] = "clang"
+    env["CXX"] = "clang++"
+
 if env["p"] != "":
     env["platform"] = env["p"]
 
@@ -127,13 +133,21 @@ if env["platform"] in ("x11", "linux"):
         env.Append(CCFLAGS=["-g", "-O3"])
 elif env["platform"] == "windows":
     cpp_library += ".windows"
-    if not (env.msvc):
-        env["CXX"] = "x86_64-w64-mingw32-g++-posix"
-        env["LINK"] = "x86_64-w64-mingw32-g++-posix"
-        env["SHLIBSUFFIX"] = ".dll.a"
     # This makes sure to keep the session environment variables on windows,
     # that way you can run scons in a vs 2017 prompt and it will find all the required tools
     env.Append(ENV=os.environ)
+    env.Append(CPPDEFINES=["WIN32", "_WIN32", "_WINDOWS", "_CRT_SECURE_NO_WARNINGS", "_ITERATOR_DEBUG_LEVEL=2"])
+    env.Append(CCFLAGS=["-W3", "-GR"])
+    env.Append(CXXFLAGS=["-std:c++17"])
+    if env["target"] in ("debug", "d", "editor", "e"):
+        env.Append(CPPDEFINES=["_DEBUG"])
+        env.Append(CCFLAGS=["-EHsc", "-MDd", "-ZI", "-FS"])
+        env.Append(LINKFLAGS=["-DEBUG", "/MACHINE:" + env['msvc_arch']])
+    else:
+        env.Append(CPPDEFINES=["NDEBUG"])
+        env.Append(CCFLAGS=["-O2", "-EHsc", "-MD"])
+    if not(env["use_llvm"]):
+        env.Append(CPPDEFINES=["TYPED_METHOD_BIND"])
 
 if env["target"] in ("debug", "d"):
     cpp_library += ".template_debug"
