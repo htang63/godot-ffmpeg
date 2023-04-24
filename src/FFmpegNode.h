@@ -57,7 +57,6 @@ private:
 	void _init_media();
 
 protected:
-	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
