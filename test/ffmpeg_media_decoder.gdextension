@@ -1,6 +1,6 @@
 [configuration]
 
-entry_symbol = "init"
+entry_symbol = "ffmpeg_library_init"
 
 [libraries]
 
