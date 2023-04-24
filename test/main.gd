@@ -7,11 +7,12 @@ const TIME_SKIP = 5
 
 @onready var ffmpeg = $FFmpegNode
 
+@export_file("*.webm", "*.mov") var vid_path
 
 func _ready():
 	texture = ffmpeg.get_video_texture()
 
-	ffmpeg.load_path(FILE_PATH)
+	ffmpeg.load_path(vid_path)
 	ffmpeg.play()
 	ffmpeg.set_loop(true)
 
