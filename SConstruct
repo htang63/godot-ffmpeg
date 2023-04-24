@@ -27,7 +27,6 @@ opts.Add(
 )
 opts.Add(EnumVariable("bits", "Target platform bits", "64", ("32", "64")))
 opts.Add(BoolVariable("dev_build", "Debug symbols", "yes"))
-opts.Add("ffmpeg_path", "Path to precompiled ffmpeg library", "ffmpeg")
 
 opts.Update(env)
 
@@ -115,13 +114,26 @@ if env["platform"] == "":
 if env["platform"] == "freebsd":
     env["platform"] = "linux"
 
+if env["target"] in ("debug", "editor"):
+    env.Append(CPPDEFINES=["DEBUG_ENABLED", "DEBUG_METHODS_ENABLED"])
+
+if env["platform"] in ("x11", "linux"):
+    cpp_library += ".linux"
+    env.Append(CCFLAGS=["-fPIC"])
+    env.Append(CXXFLAGS=["-std=c++17"])
+    if env["target"] in ("debug", "d", "editor", "e"):
+        env.Append(CCFLAGS=["-g", "-O2"])
+    else:
+        env.Append(CCFLAGS=["-g", "-O3"])
 elif env["platform"] == "windows":
+    cpp_library += ".windows"
     if not (env.msvc):
         env["CXX"] = "x86_64-w64-mingw32-g++-posix"
         env["LINK"] = "x86_64-w64-mingw32-g++-posix"
-
         env["SHLIBSUFFIX"] = ".dll.a"
-
+    # This makes sure to keep the session environment variables on windows,
+    # that way you can run scons in a vs 2017 prompt and it will find all the required tools
+    env.Append(ENV=os.environ)
 
 if env["target"] in ("debug", "d"):
     cpp_library += ".template_debug"
@@ -135,11 +147,9 @@ if env["dev_build"]:
 
 cpp_library += "." + str(env_arch)
 
-arch = "x86_64"
-
 # make sure our binding library is properly includes
-env.Append(LIBPATH=["lib/" + env["platform"] + "/" + arch + "/lib","#$ffmpeg_path/lib", cpp_bindings_path + "bin/"])
-env.Append(CPPPATH=["lib/" + env["platform"] + "/" + arch + "/include","#$ffmpeg_path/include", godot_headers_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/"])
+env.Append(LIBPATH=["lib/" + env["platform"] + "/" + env_arch + "/lib", cpp_bindings_path + "bin/"])
+env.Append(CPPPATH=["lib/" + env["platform"] + "/" + env_arch + "/include", godot_headers_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/"])
 env.Append(LIBS=[cpp_library])
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
