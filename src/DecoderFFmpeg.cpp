@@ -408,7 +408,7 @@ void DecoderFFmpeg::updateVideoFrame() {
         int width = srcFrame->width;
         int height = srcFrame->height;
 
-        const AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
+        const AVPixelFormat dstFormat = AV_PIX_FMT_RGBA;//AV_PIX_FMT_RGB24;
         AVFrame* dstFrame = av_frame_alloc();
         av_frame_copy_props(dstFrame, srcFrame);
 
