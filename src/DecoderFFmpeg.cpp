@@ -60,13 +60,13 @@ bool DecoderFFmpeg::init(const char* filePath) {
 		mIsSeekToAny = false;
 	}
 
-	AVDictionary* opts = nullptr;
-	if (mUseTCP) {
-		av_dict_set(&opts, "rtsp_transport", "tcp", 0);
-	}
+	// AVDictionary* opts = nullptr;
+	// if (mUseTCP) {
+	// 	av_dict_set(&opts, "rtsp_transport", "tcp", 0);
+	// }
 	
-	errorCode = avformat_open_input(&mAVFormatContext, filePath, nullptr, &opts);
-	av_dict_free(&opts);
+	errorCode = avformat_open_input(&mAVFormatContext, filePath, nullptr, nullptr);
+	//av_dict_free(&opts);
 	if (errorCode < 0) {
 		LOG("avformat_open_input error(%x). \n", errorCode);
 		printErrorMsg(errorCode);
