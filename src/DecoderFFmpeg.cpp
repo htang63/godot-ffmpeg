@@ -50,15 +50,15 @@ bool DecoderFFmpeg::init(const char* filePath) {
 	}
 
 	int errorCode = 0;
-	errorCode = loadConfig();
-	if (errorCode < 0) {
-		LOG("config loading error. \n");
-		LOG("Use default settings. \n");
-		mVideoBuffMax = 64;
-		mAudioBuffMax = 128;
-		mUseTCP = false;
-		mIsSeekToAny = false;
-	}
+	//errorCode = loadConfig();
+	//if (errorCode < 0) {
+		//LOG("config loading error. \n");
+		//LOG("Use default settings. \n");
+	mVideoBuffMax = 64;
+	mAudioBuffMax = 128;
+	mUseTCP = false;
+	mIsSeekToAny = false;
+	//}
 
 	// AVDictionary* opts = nullptr;
 	// if (mUseTCP) {
@@ -408,7 +408,7 @@ void DecoderFFmpeg::updateVideoFrame() {
         int width = srcFrame->width;
         int height = srcFrame->height;
 
-        const AVPixelFormat dstFormat = AV_PIX_FMT_RGBA;//AV_PIX_FMT_RGB24;
+        const AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
         AVFrame* dstFrame = av_frame_alloc();
         av_frame_copy_props(dstFrame, srcFrame);
 
@@ -546,7 +546,7 @@ int DecoderFFmpeg::loadConfig() {
 		}
 	}
 
-	mUseTCP = tcp != 0;
+	mUseTCP = false;//tcp != 0;
 	mVideoBuffMax = buffVideoMax;
 	mAudioBuffMax = buffAudioMax;
 	mIsSeekToAny = seekAny != 0;

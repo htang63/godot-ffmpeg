@@ -198,9 +198,16 @@ void FFmpegNode::_process(float delta) {
 					PackedByteArray image_data;
 					image_data.resize(data_size);
 					memcpy(image_data.ptrw(), frame_data, data_size);
-					image->create_from_data(width, height, false, Image::FORMAT_RGBA8, image_data);
+					image->create_from_data(width, height, false, Image::FORMAT_RGB8, image_data);
 
 					if (first_frame) {
+						Error err = image->save_png("test.png");
+						if (err != OK){
+							printf("failed to save frist frame: %d", err);
+							stop();
+							nativeReleaseVideoFrame(id);
+							break;
+						}
 						texture->create_from_image(image);
 						first_frame = false;
 					} else {
