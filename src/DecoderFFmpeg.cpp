@@ -396,55 +396,65 @@ bool DecoderFFmpeg::isBuffBlocked() {
 }
 
 void DecoderFFmpeg::updateVideoFrame() {
-	int isFrameAvailable = 0;
 	AVFrame* srcFrame = av_frame_alloc();
 	clock_t start = clock();
-	if (avcodec_decode_video2(mVideoCodecContext, srcFrame, &isFrameAvailable, &mPacket) < 0) {
-		LOG("Error processing data. \n");
+	int ret;
+
+    ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
+    if (ret < 0) {
+        LOG("Error sending a packet for decoding\n");
 		return;
+    }
+
+	while (ret >= 0) {
+		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+			return;
+		if (ret < 0){
+			LOG("Error during decoding\n");
+			return;
+		}
 	}
 
-	if (isFrameAvailable) {
-        int width = srcFrame->width;
-        int height = srcFrame->height;
+	int width = srcFrame->width;
+	int height = srcFrame->height;
 
-        const AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
-        AVFrame* dstFrame = av_frame_alloc();
-        av_frame_copy_props(dstFrame, srcFrame);
+	const AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
+	AVFrame* dstFrame = av_frame_alloc();
+	av_frame_copy_props(dstFrame, srcFrame);
 
-        dstFrame->format = dstFormat;
+	dstFrame->format = dstFormat;
 
-        //av_image_alloc(dstFrame->data, dstFrame->linesize, dstFrame->width, dstFrame->height, dstFormat, 0)
-        int numBytes = avpicture_get_size(dstFormat, width, height);
-        AVBufferRef* buffer = av_buffer_alloc(numBytes*sizeof(uint8_t));
-        avpicture_fill((AVPicture *)dstFrame,buffer->data,dstFormat,width,height);
-        dstFrame->buf[0] = buffer;
+	//av_image_alloc(dstFrame->data, dstFrame->linesize, dstFrame->width, dstFrame->height, dstFormat, 0)
+	int numBytes = avpicture_get_size(dstFormat, width, height);
+	AVBufferRef* buffer = av_buffer_alloc(numBytes*sizeof(uint8_t));
+	avpicture_fill((AVPicture *)dstFrame,buffer->data,dstFormat,width,height);
+	dstFrame->buf[0] = buffer;
 
-        SwsContext* conversion = sws_getContext(width,
-                                                height,
-                                                (AVPixelFormat)srcFrame->format,
-                                                width,
-                                                height,
-                                                dstFormat,
-                                                SWS_FAST_BILINEAR,
-                                                nullptr,
-                                                nullptr,
-                                                nullptr);
-        sws_scale(conversion, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
-        sws_freeContext(conversion);
+	SwsContext* conversion = sws_getContext(width,
+											height,
+											(AVPixelFormat)srcFrame->format,
+											width,
+											height,
+											dstFormat,
+											SWS_FAST_BILINEAR,
+											nullptr,
+											nullptr,
+											nullptr);
+	sws_scale(conversion, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
+	sws_freeContext(conversion);
 
-        dstFrame->format = dstFormat;
-        dstFrame->width = srcFrame->width;
-        dstFrame->height = srcFrame->height;
+	dstFrame->format = dstFormat;
+	dstFrame->width = srcFrame->width;
+	dstFrame->height = srcFrame->height;
 
-        av_frame_free(&srcFrame);
+	av_frame_free(&srcFrame);
 
-        LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
+	LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
 
-		std::lock_guard<std::mutex> lock(mVideoMutex);
-		mVideoFrames.push(dstFrame);
-		updateBufferState();
-	}
+	std::lock_guard<std::mutex> lock(mVideoMutex);
+	mVideoFrames.push(dstFrame);
+	updateBufferState();
 }
 
 void DecoderFFmpeg::updateAudioFrame() {
