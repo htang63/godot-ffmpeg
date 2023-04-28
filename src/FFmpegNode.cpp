@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/class_db.hpp>
 //#include <godot_cpp/variant/utility_functions.hpp>
+#include "Logger.h"
 
 using namespace godot;
 
@@ -203,10 +204,7 @@ void FFmpegNode::_process(float delta) {
 					if (first_frame) {
 						Error err = image->save_png("test.png");
 						if (err != OK){
-							printf("failed to save frist frame: %d", err);
-							stop();
-							nativeReleaseVideoFrame(id);
-							break;
+							WARN_PRINT("failed to save frist frame: %d", err);
 						}
 						texture->create_from_image(image);
 						first_frame = false;

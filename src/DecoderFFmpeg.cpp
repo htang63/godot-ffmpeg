@@ -174,8 +174,6 @@ bool DecoderFFmpeg::decode() {
 		//else if (mAudioInfo.isEnabled && mPacket.stream_index == mAudioStream->index) {
 		// 	updateAudioFrame();
 		//}
-
-		av_packet_unref(&mPacket);
 	}
 
 	return true;
@@ -407,10 +405,11 @@ void DecoderFFmpeg::updateVideoFrame() {
         LOG("Error sending a packet for decoding\n");
 		return;
     }
+	av_packet_unref(&mPacket);
 	ret = 0;
 	while (ret >= 0) {
 		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        if (ret == AVERROR_EOF)
 			break;
 		if (ret < 0){
 			LOG("Error during decoding\n");
@@ -419,6 +418,15 @@ void DecoderFFmpeg::updateVideoFrame() {
 		if (ret == 0){
 			isFrameReady = true;
 			break;
+		}
+		if (ret == AVERROR(EAGAIN)) {
+			av_read_frame(mAVFormatContext, &mPacket);
+			ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
+			if (ret < 0) {
+				LOG("Error sending a packet for decoding\n");
+				return;
+			}
+			av_packet_unref(&mPacket);
 		}
 	}
 
