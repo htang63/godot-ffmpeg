@@ -401,11 +401,11 @@ void DecoderFFmpeg::updateVideoFrame() {
 	bool isFrameReady = false;
 
     ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
+	av_packet_unref(&mPacket);
     if (ret < 0) {
         LOG("Error sending a packet for decoding\n");
 		return;
-    }
-	av_packet_unref(&mPacket);
+    }	
 	ret = 0;
 	while (ret >= 0) {
 		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
@@ -414,7 +414,8 @@ void DecoderFFmpeg::updateVideoFrame() {
 			break;
 		if (ret < 0){
 			LOG("Error during decoding\n");
-			break;
+			av_frame_free(&srcFrame);
+			return;
 		}
 		if (ret == AVERROR(EAGAIN)) {
 			av_read_frame(mAVFormatContext, &mPacket);
@@ -422,6 +423,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 			av_packet_unref(&mPacket);
 			if (ret < 0) {
 				LOG("Error sending a packet for decoding\n");
+				av_frame_free(&srcFrame);
 				return;
 			}
 		}
@@ -431,7 +433,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 		int width = srcFrame->width;
 		int height = srcFrame->height;
 
-		const AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
+		const AVPixelFormat dstFormat = AV_PIX_FMT_RGB32;
 		AVFrame* dstFrame = av_frame_alloc();
 		av_frame_copy_props(dstFrame, srcFrame);
 
@@ -449,7 +451,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 												width,
 												height,
 												dstFormat,
-												SWS_FAST_BILINEAR,
+												SWS_BILINEAR,
 												nullptr,
 												nullptr,
 												nullptr);
@@ -462,10 +464,9 @@ void DecoderFFmpeg::updateVideoFrame() {
 		LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
 		std::lock_guard<std::mutex> lock(mVideoMutex);
 		mVideoFrames.push(dstFrame);
+		av_frame_free(&srcFrame);
+		updateBufferState();
 	}
-	
-	av_frame_free(&srcFrame);
-	updateBufferState();
 }
 
 void DecoderFFmpeg::updateAudioFrame() {
