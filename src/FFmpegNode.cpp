@@ -204,7 +204,7 @@ void FFmpegNode::_process(float delta) {
 					if (first_frame) {
 						Error err = image->save_png("test.png");
 						if (err != OK){
-							WARN_PRINT("failed to save frist frame: %d", err);
+							LOG("failed to save frist frame: %d", err);
 						}
 						texture->create_from_image(image);
 						first_frame = false;
