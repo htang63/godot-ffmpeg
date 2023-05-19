@@ -31,11 +31,6 @@ opts.Add(BoolVariable("dev_build", "Debug symbols", "yes"))
 
 opts.Update(env)
 
-if env['platform'] == "windows" and not env["use_mingw"]:
-    env.msvc = True
-else:
-    env.msvc = False
-
 # Local dependency paths, adapt them to your setup
 godot_headers_path = "godot-cpp/gdextension/"
 cpp_bindings_path = "godot-cpp/"
@@ -136,7 +131,7 @@ elif env["platform"] == "windows":
     # This makes sure to keep the session environment variables on windows,
     # that way you can run scons in a vs 2017 prompt and it will find all the required tools
     env.Append(ENV=os.environ)
-    env.Append(CPPDEFINES=["WIN32", "_WIN32", "_WINDOWS", "_CRT_SECURE_NO_WARNINGS", "_ITERATOR_DEBUG_LEVEL=2"])
+    #env.Append(CPPDEFINES=["WIN32", "_WIN32", "_WINDOWS", "_CRT_SECURE_NO_WARNINGS", "_ITERATOR_DEBUG_LEVEL=2"])
     env.Append(CCFLAGS=["-W3", "-GR"])
     env.Append(CXXFLAGS=["-std:c++17"])
     if env["target"] in ("debug", "d", "editor", "e"):
@@ -174,7 +169,7 @@ Export('env')
 sources = Glob("src/*.cpp") + Glob("lib/*.c")
 
 suffix = env["SHLIBSUFFIX"]
-if env["platform"] == "windows" and (not env.msvc):
+if env["platform"] == "windows":
     suffix = ".dll"
 
 library = env.SharedLibrary("bin/" + env["platform"] + "/libffmpegmediadecoder.64" + suffix, source=sources)
