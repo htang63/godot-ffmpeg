@@ -2,7 +2,6 @@
 
 import os
 import sys
-import platform
 
 env = SConscript("godot-cpp/SConstruct")
 
@@ -11,41 +10,25 @@ if env['platform'] == "windows" and not env["use_mingw"]:
 else:
     env.msvc = False
 
-
-opts = Variables([])
-opts.Add("ffmpeg_path", "Path to precompiled ffmpeg library", "ffmpeg")
-
-opts.Update(env)
-
-
-arch = "x86"
-if env["arch_suffix"] == "64":
-    arch = "x86_64"
-
-if env["platform"] == "freebsd":
-    env["platform"] = "linux"
-
-elif env["platform"] == "windows":
+if env["platform"] == "windows":
     if not (env.msvc):
         env["CXX"] = "x86_64-w64-mingw32-g++-posix"
         env["LINK"] = "x86_64-w64-mingw32-g++-posix"
-
         env["SHLIBSUFFIX"] = ".dll.a"
-        env.Append(LIBPATH=["lib/" + env["platform"] + "/" + arch + "/bin"])
+        env.Append(LIBPATH=["lib/" + env["platform"] + "/" + env["arch"] + "/bin"])
 
-
-env.Append(LIBPATH=["lib/" + env["platform"] + "/" + arch + "/lib", "#$ffmpeg_path/lib"])
-env.Append(CPPPATH=["lib/" + env["platform"] + "/" + arch + "/include", "#$ffmpeg_path/include"])
-env.Append(CPPPATH=["src/"])
-
-sources = Glob("src/*.cpp") + Glob("lib/*.c")
+env.Append(LIBPATH=["lib/" + env["platform"] + "/" + env["arch"] + "/lib"])
+env.Append(CPPPATH=["src/", "lib/" + env["platform"] + "/" + env["arch"] + "/include"])
+env.Append(LIBS=["avformat", "avcodec", "avutil", "avfilter", "swresample", "swscale"])
+sources = Glob("src/*.cpp")
 
 suffix = env["SHLIBSUFFIX"]
-if env["platform"] == "windows" and (not env.msvc):
+if env["platform"] == "windows":
     suffix = ".dll"
 
-library = env.SharedLibrary("bin/" + env["platform"] + "/libffmpegmediadecoder." + env["arch_suffix"] + suffix, source=sources)
-
-env.Prepend(LIBS=["avformat", "avcodec", "avutil", "swresample", "swscale"])
+library = env.SharedLibrary(
+    "bin/" + env["platform"] + "/libffmpegmediadecoder." + env["arch"] + "." + suffix, 
+    source=sources
+)
 
 Default(library)

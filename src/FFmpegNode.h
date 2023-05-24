@@ -30,7 +30,8 @@ private:
 
 	Ref<ImageTexture> texture;
 	Ref<Image> image;
-
+	PackedByteArray image_buffer;
+	
 	int id = 0;
 	int state = UNINITIALIZED;
 
@@ -57,7 +58,6 @@ private:
 	void _init_media();
 
 protected:
-	void _notification(int p_what);
 	static void _bind_methods();
 
 public:

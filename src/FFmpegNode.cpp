@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/class_db.hpp>
 //#include <godot_cpp/variant/utility_functions.hpp>
+#include "Logger.h"
 
 using namespace godot;
 
@@ -15,7 +16,7 @@ void FFmpegNode::_init_media() {
 		first_frame = true;
 
 		nativeGetVideoFormat(id, width, height, video_length);
-		data_size = width * height * 3;
+		data_size = width * height * 4;
 	}
 
 	audio_playback = nativeIsAudioEnabled(id);
@@ -195,18 +196,15 @@ void FFmpegNode::_process(float delta) {
 				nativeGrabVideoFrame(id, &frame_data, frame_ready);
 
 				if (frame_ready) {
-					PackedByteArray image_data;
-					image_data.resize(data_size);
-					memcpy(image_data.ptrw(), frame_data, data_size);
-					image->create_from_data(width, height, false, Image::FORMAT_RGB8, image_data);
-
-					if (first_frame) {
-						texture->create_from_image(image);
+					if (first_frame){
 						first_frame = false;
-					} else {
-						texture->update(image);
+						image = Image::create(width, height, false, Image::FORMAT_RGBA8);
+						texture = ImageTexture::create_from_image(image);
+						image_buffer.resize(image->get_data().size());
 					}
-
+					memcpy(image_buffer.ptrw(), frame_data, image_buffer.size());
+					image = Image::create_from_data(width, height, false, Image::FORMAT_RGBA8, image_buffer);
+					texture->update(image);
 					nativeReleaseVideoFrame(id);
 				}
 
@@ -233,6 +231,9 @@ void FFmpegNode::_process(float delta) {
 			if (looping) {
 				state = DECODING;
 				seek(0.0f);
+			}else{
+				image = Image::create(width, height, false, Image::FORMAT_RGBA8);
+				texture = ImageTexture::create_from_image(image);
 			}
 		} break;
 	}

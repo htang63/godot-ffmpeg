@@ -362,7 +362,7 @@ void nativeGrabVideoFrame(int id, void** frameData, bool& frameReady) {
         if (videoDecCurTime <= videoCtx->progressTime) {
 
             double curFrameTime = localAVHandler->getVideoFrame(frameData);
-            if (frameData != nullptr && curFrameTime != -1 && videoCtx->lastUpdateTime != curFrameTime) {
+            if (frameData != nullptr && *frameData != nullptr && curFrameTime != -1 && videoCtx->lastUpdateTime != curFrameTime) {
                 frameReady = true;
                 videoCtx->lastUpdateTime = (float)curFrameTime;
                 videoCtx->isContentReady = true;
