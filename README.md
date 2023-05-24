@@ -10,7 +10,7 @@ cd ../godot-cpp
 scons target=template_debug generate_bindings=yes dev_build=yes
 
 cd ..
-scons target=debug dev_build=yes
+scons target=template_debug dev_build=yes
 ```
 # Windows
 
@@ -18,10 +18,10 @@ Precompiled ffmpeg libraries (version 4.4.1) can be found here:
 
 https://www.gyan.dev/ffmpeg/builds/#libraries
 
-Unpack the package in the root and run:
+Unpack the package and copy include, lib and bin into [project]/lib/windows/x86_64:
 
 ```
-scons target=release ffmpeg-path=ffmpeg-4-shared
+scons target=template_debug dev_build=yes
 ```
 
 Copy all dlls from ffmpeg-4-shared/bin to bin/windows:

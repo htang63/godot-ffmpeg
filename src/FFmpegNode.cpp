@@ -202,7 +202,6 @@ void FFmpegNode::_process(float delta) {
 						texture = ImageTexture::create_from_image(image);
 						image_buffer.resize(image->get_data().size());
 					}
-					
 					memcpy(image_buffer.ptrw(), frame_data, image_buffer.size());
 					image = Image::create_from_data(width, height, false, Image::FORMAT_RGBA8, image_buffer);
 					texture->update(image);
