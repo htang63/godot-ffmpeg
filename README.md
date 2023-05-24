@@ -2,16 +2,13 @@
 Original project https://github.com/Godot-dcl/ffmpeg-node
 Updated to Godot release build 4.0.1
 
-# Building
+# Linux
 
 ```
 git submodule update --init --recursive
 
 cd ffmpeg_build_scripts
-./[Platform Name].sh
-
-cd ../godot-cpp
-scons target=template_debug generate_bindings=yes dev_build=yes
+./linux.sh
 
 cd ..
 scons target=template_debug dev_build=yes
