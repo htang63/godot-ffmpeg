@@ -231,6 +231,9 @@ void FFmpegNode::_process(float delta) {
 			if (looping) {
 				state = DECODING;
 				seek(0.0f);
+			}else{
+				image = Image::create(width, height, false, Image::FORMAT_RGBA8);
+				texture = ImageTexture::create_from_image(image);
 			}
 		} break;
 	}
