@@ -13,7 +13,7 @@ else:
 arch = "x86_64"
 
 if env["platform"] == "windows":
-    env.Append(LIBPATH=["lib/" + env["platform"] + "/" + arch + "/bin"])
+    #env.Append(LIBPATH=["lib/" + env["platform"] + "/" + arch + "/bin"])
     if not (env.msvc):
         env["CXX"] = "x86_64-w64-mingw32-g++-posix"
         env["LINK"] = "x86_64-w64-mingw32-g++-posix"
