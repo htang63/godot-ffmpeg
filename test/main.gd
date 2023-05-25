@@ -1,21 +1,16 @@
 extends TextureRect
 
-
-const FILE_PATH =\
-		"http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-const TIME_SKIP = 5
-
 @onready var ffmpeg = $FFmpegNode
 
-@export_file("*.webm", "*.mov") var vid_path
-
 func _ready():
-	texture = ffmpeg.get_video_texture()
-
-	ffmpeg.load_path(vid_path)
+	ffmpeg.load_path("bigbuckbunny.webm")
 	ffmpeg.play()
-	ffmpeg.set_loop(true)
+	ffmpeg.set_loop(false)
+	return
 
+func _process(delta):
+	texture = ffmpeg.get_video_texture()
+	return
 
 func _input(event):
 	if event.is_action_pressed("ui_left"):
@@ -24,3 +19,4 @@ func _input(event):
 		ffmpeg.seek(ffmpeg.get_playback_position() + TIME_SKIP)
 	elif event.is_action_pressed("ui_accept"):
 		ffmpeg.set_paused(not ffmpeg.is_paused())
+	return
