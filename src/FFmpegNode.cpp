@@ -14,22 +14,21 @@ void FFmpegNode::_init_media() {
 	video_playback = nativeIsVideoEnabled(id);
 	if (video_playback) {
 		first_frame = true;
-
 		nativeGetVideoFormat(id, width, height, video_length);
 		data_size = width * height * 4;
 	}
 
-	audio_playback = nativeIsAudioEnabled(id);
-	if (audio_playback) {
-		nativeGetAudioFormat(id, channels, frequency, audio_length);
-	}
+	//audio_playback = nativeIsAudioEnabled(id);
+	// if (audio_playback) {
+	// 	nativeGetAudioFormat(id, channels, frequency, audio_length);
+	// }
 
 	state = INITIALIZED;
 }
 
-bool FFmpegNode::load_path(String path) {
+String FFmpegNode::load_path(String path) {
 	if (nativeGetDecoderState(id) > 1) {
-		return false;
+		return "false";
 	}
 
 	CharString utf8 = path.utf8();
@@ -44,7 +43,7 @@ bool FFmpegNode::load_path(String path) {
 		state = UNINITIALIZED;
 	}
 
-	return is_loaded;
+	return "is_loaded";
 }
 
 void FFmpegNode::load_path_async(String path) {
@@ -78,11 +77,7 @@ void FFmpegNode::play() {
 }
 
 void FFmpegNode::stop() {
-	if (nativeGetDecoderState(id) != DECODING) {
-		return;
-	}
-
-	nativeDestroyDecoder(id);
+	nativeScheduleDestroyDecoder(id);
 
 	video_current_time = 0.0f;
 	audio_current_time = 0.0f;
@@ -130,7 +125,7 @@ float FFmpegNode::get_playback_position() const {
 }
 
 void FFmpegNode::seek(float p_time) {
-	if (state != DECODING && state != END_OF_FILE) {
+	if (state != DECODING && state != END_OF_FILE && state != DONE) {
 		return;
 	}
 
@@ -149,8 +144,9 @@ void FFmpegNode::seek(float p_time) {
 }
 
 void FFmpegNode::_process(float delta) {
+	// TODO: Implement audio.
+	/*
 	if (state > INITIALIZED && state != SEEK && state != END_OF_FILE) {
-		// TODO: Implement audio.
 		unsigned char *audio_data = nullptr;
 		int audio_size = 0;
 		double audio_time = nativeGetAudioData(id, &audio_data, audio_size);
@@ -158,6 +154,7 @@ void FFmpegNode::_process(float delta) {
 			nativeFreeAudioData(id);
 		}
 	}
+	*/
 
 	switch (state) {
 		case LOADING: {
@@ -217,10 +214,10 @@ void FFmpegNode::_process(float delta) {
 						nativeSetVideoTime(id, video_current_time);
 					} else {
 						state = END_OF_FILE;
+						break;
 					}
 				}
 			}
-
 			if (nativeIsVideoBufferEmpty(id) && !nativeIsEOF(id)) {
 				hang_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
 				state = BUFFERING;
@@ -233,7 +230,9 @@ void FFmpegNode::_process(float delta) {
 				seek(0.0f);
 			}else{
 				image = Image::create(width, height, false, Image::FORMAT_RGBA8);
-				texture = ImageTexture::create_from_image(image);
+				texture->update(image);
+				stop();
+				state = DONE;
 			}
 		} break;
 	}
@@ -266,7 +265,6 @@ FFmpegNode::FFmpegNode() {
 	image = Ref<Image>(memnew(Image()));
 
 	// TODO: Implement audio.
-
 // 	player = memnew(AudioStreamPlayer);
 // 	add_child(player);
 // 	Ref<AudioStreamGenerator> generator = Ref<AudioStreamGenerator>(memnew(AudioStreamGenerator));
