@@ -13,13 +13,13 @@ cd ffmpeg_build_scripts
 cd ..
 scons target=template_debug dev_build=yes
 ```
-# Windows (currently not working!)
+# Windows
 
-Precompiled ffmpeg libraries can be found here:
+Precompiled ffmpeg libraries (4.4) can be found here:
 
-https://www.gyan.dev/ffmpeg/builds/#release-builds
+https://github.com/BtbN/FFmpeg-Builds/wiki/Latest
 
-Download the full-shared build
+Download the win64-gpl-shared-4.4
 
 Unpack the package and copy include, lib and bin into [project]/lib/windows/x86_64:
 

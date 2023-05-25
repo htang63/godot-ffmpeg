@@ -27,7 +27,7 @@ if env["platform"] == "windows":
     suffix = ".dll"
 
 library = env.SharedLibrary(
-    "bin/" + env["platform"] + "/libffmpegmediadecoder." + env["arch"] + "." + suffix, 
+    "bin/" + env["platform"] + "/libffmpegmediadecoder." + env["arch"] + suffix, 
     source=sources
 )
 
