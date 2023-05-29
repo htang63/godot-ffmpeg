@@ -2,6 +2,7 @@
 
 import os
 import sys
+import platform
 
 env = SConscript("godot-cpp/SConstruct")
 
@@ -16,6 +17,9 @@ if env["platform"] == "windows":
         env["LINK"] = "x86_64-w64-mingw32-g++-posix"
         env["SHLIBSUFFIX"] = ".dll.a"
         env.Append(LIBPATH=["lib/" + env["platform"] + "/" + env["arch"] + "/bin"])
+
+if env["platform"] == "macos":
+    env["arch"] = platform.uname().machine
 
 env.Append(LIBPATH=["lib/" + env["platform"] + "/" + env["arch"] + "/lib"])
 env.Append(CPPPATH=["src/", "lib/" + env["platform"] + "/" + env["arch"] + "/include"])
