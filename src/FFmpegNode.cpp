@@ -28,7 +28,7 @@ void FFmpegNode::_init_media() {
 
 String FFmpegNode::load_path(String path) {
 	if (nativeGetDecoderState(id) > 1) {
-		return "false";
+		return "decoder still active";
 	}
 
 	CharString utf8 = path.utf8();
@@ -43,7 +43,7 @@ String FFmpegNode::load_path(String path) {
 		state = UNINITIALIZED;
 	}
 
-	return "is_loaded";
+	return "";
 }
 
 void FFmpegNode::load_path_async(String path) {
@@ -77,7 +77,7 @@ void FFmpegNode::play() {
 }
 
 void FFmpegNode::stop() {
-	nativeScheduleDestroyDecoder(id);
+	nativeDestroyDecoder(id);
 
 	video_current_time = 0.0f;
 	audio_current_time = 0.0f;
@@ -273,7 +273,7 @@ FFmpegNode::FFmpegNode() {
 }
 
 FFmpegNode::~FFmpegNode() {
-	nativeScheduleDestroyDecoder(id);
+	nativeDestroyDecoder(id);
 }
 
 void FFmpegNode::_bind_methods() {
