@@ -116,8 +116,10 @@ bool DecoderFFmpeg::init(const char* filePath) {
 
 		//mVideoFrames.swap(decltype(mVideoFrames)());
 	}
-
+	
+	//disable audio for now
 	/* Audio initialization */
+	/*
 	int audioStreamIndex = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
 	if (audioStreamIndex < 0) {
 		LOG("audio stream not found. \n");
@@ -146,9 +148,10 @@ bool DecoderFFmpeg::init(const char* filePath) {
 			printErrorMsg(errorCode);
 			return false;
 		}
-
+		
 		//mAudioFrames.swap(decltype(mAudioFrames)());
 	}
+	*/
 
 	mIsInitialized = true;
 
@@ -307,7 +310,7 @@ void DecoderFFmpeg::seek(double time) {
 		flushBuffer(&mVideoFrames, &mVideoMutex);
 		mVideoInfo.lastTime = -1;
 	}
-	
+	/*
 	if (mAudioInfo.isEnabled) {
 		if (mAudioCodecContext != nullptr) {
 			avcodec_flush_buffers(mAudioCodecContext);
@@ -315,6 +318,7 @@ void DecoderFFmpeg::seek(double time) {
 		flushBuffer(&mAudioFrames, &mAudioMutex);
 		mAudioInfo.lastTime = -1;
 	}
+	*/
 }
 
 int DecoderFFmpeg::getMetaData(char**& key, char**& value) {
@@ -361,7 +365,7 @@ void DecoderFFmpeg::destroy() {
 	}
 	
 	flushBuffer(&mVideoFrames, &mVideoMutex);
-	flushBuffer(&mAudioFrames, &mAudioMutex);
+	//flushBuffer(&mAudioFrames, &mAudioMutex);
 	
 	mVideoCodec = nullptr;
 	mAudioCodec = nullptr;
@@ -371,7 +375,7 @@ void DecoderFFmpeg::destroy() {
 	av_packet_unref(&mPacket);
 	
 	memset(&mVideoInfo, 0, sizeof(VideoInfo));
-	memset(&mAudioInfo, 0, sizeof(AudioInfo));
+	//memset(&mAudioInfo, 0, sizeof(AudioInfo));
 	
 	mIsInitialized = false;
 	mIsAudioAllChEnabled = false;

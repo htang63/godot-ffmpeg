@@ -41,6 +41,7 @@ String FFmpegNode::load_path(String path) {
 		_init_media();
 	} else {
 		state = UNINITIALIZED;
+		return "uninitialized";
 	}
 
 	return "";
@@ -77,17 +78,18 @@ void FFmpegNode::play() {
 }
 
 void FFmpegNode::stop() {
-	nativeDestroyDecoder(id);
-
+	//nativeDestroyDecoder(id);
+	nativeScheduleDestroyDecoder(id);
+	
 	video_current_time = 0.0f;
 	audio_current_time = 0.0f;
 	paused = false;
 
-	state = INITIALIZED;
+	state = DONE;
 }
 
 bool FFmpegNode::is_playing() const {
-	return !paused && state == DECODING;
+	return !paused && state != DONE;
 }
 
 void FFmpegNode::set_paused(bool p_paused) {
@@ -230,12 +232,13 @@ void FFmpegNode::_process(float delta) {
 				seek(0.0f);
 			}else{
 				image = Image::create(width, height, false, Image::FORMAT_RGBA8);
-				texture->update(image);
+				texture = ImageTexture::create_from_image(image);
 				stop();
-				state = DONE;
 			}
 		} break;
 	}
+	//clean up decoders
+	nativeCleanDestroyedDecoders();
 }
 
 // TODO: Implement audio.

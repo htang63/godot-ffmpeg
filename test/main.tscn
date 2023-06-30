@@ -1,6 +1,36 @@
-[gd_scene load_steps=2 format=3 uid="uid://b72l014npyxlr"]
+[gd_scene load_steps=3 format=3 uid="uid://b72l014npyxlr"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_iyf6q"]
+
+[sub_resource type="GDScript" id="GDScript_yuexj"]
+script/source = "extends TextureRect
+
+@onready var ffmpeg = $FFmpegNode
+
+func _ready():
+	var ret = ffmpeg.load_path(\"bac01_Banker_Dragon_hd.mov\")
+	if ret == \"\":
+		ffmpeg.play()
+	else:
+		print_debug(\"video load:%s\" % ret)
+	ffmpeg.set_loop(false)
+	return
+
+func _process(delta):
+	if ffmpeg.is_playing():
+		texture = ffmpeg.get_video_texture()
+	else: 
+		texture = null
+	if Input.is_action_just_released(\"trigger\") && !ffmpeg.is_playing():
+		#ffmpeg.stop()
+		var ret = ffmpeg.load_path(\"bac01_Banker_Dragon_hd.mov\")
+		if ret == \"\":
+			ffmpeg.play()
+		else:
+			print_debug(\"video load:%s\" % ret)
+		
+	return
+"
 
 [node name="TextureRect" type="TextureRect"]
 anchors_preset = 15
@@ -10,3 +40,15 @@ expand_mode = 1
 script = ExtResource("1_iyf6q")
 
 [node name="FFmpegNode" type="FFmpegNode" parent="."]
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+script = SubResource("GDScript_yuexj")
+
+[node name="FFmpegNode" type="FFmpegNode" parent="TextureRect"]
