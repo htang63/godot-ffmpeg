@@ -80,9 +80,9 @@ String FFmpegNode::play() {
 }
 
 void FFmpegNode::stop() {
-	//nativeDestroyDecoder(id);
-	nativeScheduleDestroyDecoder(id);
-	
+	nativeDestroyDecoder(id);
+	//nativeScheduleDestroyDecoder(id);
+	id = -1;
 	video_current_time = 0.0f;
 	audio_current_time = 0.0f;
 	paused = false;
@@ -240,7 +240,7 @@ void FFmpegNode::_process(float delta) {
 		} break;
 	}
 	//clean up decoders
-	nativeCleanDestroyedDecoders();
+	//nativeCleanDestroyedDecoders();
 }
 
 // TODO: Implement audio.

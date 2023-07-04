@@ -103,7 +103,7 @@ int nativeCreateDecoderAsync(const char* filePath, int& id) {
 
 //	Synchronized init. Used for thumbnail currently.
 int nativeCreateDecoder(const char* filePath, int& id) {
-	LOG("Query available decoder id. \n");
+	//LOG("Query available decoder id. \n");
 
 	int newID = 0;
     std::shared_ptr<VideoContext> videoCtx;
