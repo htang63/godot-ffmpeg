@@ -35,11 +35,13 @@ String FFmpegNode::load_path(String path) {
 	const char *cstr = utf8.get_data();
 
 	nativeCreateDecoder(cstr, id);
+	LOG("decoder created id: %d path: %s \n", id, path);
 
-	bool is_loaded = nativeGetDecoderState(id) == 1;
-	if (is_loaded) {
+	int ret = nativeGetDecoderState(id);
+	if (ret == 1) {
 		_init_media();
 	} else {
+		LOG("decoder bad state: %d\n", ret);
 		state = UNINITIALIZED;
 		return "uninitialized";
 	}
@@ -61,20 +63,20 @@ void FFmpegNode::load_path_async(String path) {
 	state = LOADING;
 }
 
-void FFmpegNode::play() {
+String FFmpegNode::play() {
 	if (state != INITIALIZED) {
-		return;
+		return "Not initialized";
 	}
-
 	if (paused) {
 		paused = false;
 	} else {
-		nativeStartDecoding(id);
+		if (!nativeStartDecoding(id)) {
+			return "failed to start decoding";
+		}
+		state = DECODING;
 	}
-
 	global_start_time = Time::get_singleton()->get_unix_time_from_system();
-
-	state = DECODING;
+	return "";
 }
 
 void FFmpegNode::stop() {

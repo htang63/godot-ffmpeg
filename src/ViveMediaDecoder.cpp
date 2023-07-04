@@ -39,7 +39,7 @@ bool getVideoContext(int id, std::shared_ptr<VideoContext>& videoCtx) {
 		}
 	}
 
-	LOG("Decoder does not exist. \n");
+	//LOG("Decoder does not exist. \n");
 	return false;
 }
 
@@ -124,24 +124,27 @@ int nativeCreateDecoder(const char* filePath, int& id) {
 
 int nativeGetDecoderState(int id) {
     std::shared_ptr<VideoContext> videoCtx;
-	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1; }
+	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { 
+		return -1; 
+	}
 		
 	return videoCtx->avhandler->getDecoderState();
 }
 
 bool nativeStartDecoding(int id) {
     std::shared_ptr<VideoContext> videoCtx;
-	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return false; }
-
+	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { 
+		return false; 
+	}
+	AVHandler* avhandler = videoCtx->avhandler.get();
+	if (avhandler->getDecoderState() != AVHandler::DecoderState::INITIALIZED) {
+		return false;
+	}
 	if (videoCtx->initThread.joinable()) {
 		videoCtx->initThread.join();
 	}
 
-	AVHandler* avhandler = videoCtx->avhandler.get();
-	if (avhandler->getDecoderState() >= AVHandler::DecoderState::INITIALIZED) {
-		avhandler->startDecoding();
-	}
-
+	avhandler->startDecoding();
 	if (!avhandler->getVideoInfo().isEnabled) {
 		videoCtx->isContentReady = true;
 	}
@@ -186,7 +189,7 @@ bool nativeIsVideoEnabled(int id) {
 	}
 
 	bool ret = videoCtx->avhandler->getVideoInfo().isEnabled;
-	LOG("nativeIsVideoEnabled: %s \n", ret ? "true" : "false");
+	//LOG("nativeIsVideoEnabled: %s \n", ret ? "true" : "false");
 	return ret;
 }
 
@@ -356,8 +359,13 @@ void nativeGrabVideoFrame(int id, void** frameData, bool& frameReady) {
     }
 
     AVHandler* localAVHandler = videoCtx->avhandler.get();
+	if (localAVHandler == nullptr) {
+		frameReady = false;
+		return;
+	}
+	AVHandler::DecoderState dState = localAVHandler->getDecoderState();
 
-    if (localAVHandler != nullptr && localAVHandler->getDecoderState() >= AVHandler::DecoderState::INITIALIZED && localAVHandler->getVideoInfo().isEnabled) {
+    if (dState >= AVHandler::DecoderState::INITIALIZED && localAVHandler->getVideoInfo().isEnabled) {
         double videoDecCurTime = localAVHandler->getVideoInfo().lastTime;
         if (videoDecCurTime <= videoCtx->progressTime) {
 

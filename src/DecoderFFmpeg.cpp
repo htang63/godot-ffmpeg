@@ -255,7 +255,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
-		LOG("Video frame not available. \n");
+		//LOG("Video frame not available. \n");
         *frameData = nullptr;
 		return -1;
 	}
@@ -267,7 +267,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData) {
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;
 	mVideoInfo.lastTime = timeInSec;
 
-    printf("mVideoInfo.lastTime %f\n", timeInSec);
+    //printf("mVideoInfo.lastTime %f\n", timeInSec);
 
 	return timeInSec;
 }
@@ -402,38 +402,13 @@ void DecoderFFmpeg::updateVideoFrame() {
 	AVFrame* srcFrame = av_frame_alloc();
 	clock_t start = clock();
 	int ret;
-	bool isFrameReady = false;
-
-    ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
-	av_packet_unref(&mPacket);
-    if (ret < 0) {
-        LOG("Error sending a packet for decoding\n");
+	int isFrameAvailable = 0;
+	if (avcodec_decode_video2(mVideoCodecContext, srcFrame, &isFrameAvailable, &mPacket) < 0) {
+		LOG("Error processing data. \n");
 		return;
-    }	
-	ret = 0;
-	while (ret >= 0) {
-		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
-        if (ret == AVERROR_EOF || ret == 0)
-			isFrameReady = true;
-			break;
-		if (ret < 0){
-			LOG("Error during decoding\n");
-			av_frame_free(&srcFrame);
-			return;
-		}
-		if (ret == AVERROR(EAGAIN)) {
-			av_read_frame(mAVFormatContext, &mPacket);
-			ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
-			av_packet_unref(&mPacket);
-			if (ret < 0) {
-				LOG("Error sending a packet for decoding\n");
-				av_frame_free(&srcFrame);
-				return;
-			}
-		}
 	}
-
-	if (isFrameReady){
+	
+	if (isFrameAvailable > 0){
 		int width = srcFrame->width;
 		int height = srcFrame->height;
 
@@ -465,7 +440,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 		dstFrame->format = dstFormat;
 		dstFrame->width = srcFrame->width;
 		dstFrame->height = srcFrame->height;
-		LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
+		//LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
 		std::lock_guard<std::mutex> lock(mVideoMutex);
 		mVideoFrames.push(dstFrame);
 		av_frame_free(&srcFrame);
