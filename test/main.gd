@@ -8,6 +8,6 @@ func _ready():
 	ffmpeg.set_loop(false)
 	return
 
-func _process(_delta):
+func _process(delta):
 	texture = ffmpeg.get_video_texture()
 	return
