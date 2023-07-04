@@ -14,37 +14,39 @@ void FFmpegNode::_init_media() {
 	video_playback = nativeIsVideoEnabled(id);
 	if (video_playback) {
 		first_frame = true;
-
 		nativeGetVideoFormat(id, width, height, video_length);
 		data_size = width * height * 4;
 	}
 
-	audio_playback = nativeIsAudioEnabled(id);
-	if (audio_playback) {
-		nativeGetAudioFormat(id, channels, frequency, audio_length);
-	}
+	//audio_playback = nativeIsAudioEnabled(id);
+	// if (audio_playback) {
+	// 	nativeGetAudioFormat(id, channels, frequency, audio_length);
+	// }
 
 	state = INITIALIZED;
 }
 
-bool FFmpegNode::load_path(String path) {
+String FFmpegNode::load_path(String path) {
 	if (nativeGetDecoderState(id) > 1) {
-		return false;
+		return "decoder still active";
 	}
 
 	CharString utf8 = path.utf8();
 	const char *cstr = utf8.get_data();
 
 	nativeCreateDecoder(cstr, id);
+	LOG("decoder created id: %d path: %s \n", id, path);
 
-	bool is_loaded = nativeGetDecoderState(id) == 1;
-	if (is_loaded) {
+	int ret = nativeGetDecoderState(id);
+	if (ret == 1) {
 		_init_media();
 	} else {
+		LOG("decoder bad state: %d\n", ret);
 		state = UNINITIALIZED;
+		return "uninitialized";
 	}
 
-	return is_loaded;
+	return "";
 }
 
 void FFmpegNode::load_path_async(String path) {
@@ -61,38 +63,35 @@ void FFmpegNode::load_path_async(String path) {
 	state = LOADING;
 }
 
-void FFmpegNode::play() {
+String FFmpegNode::play() {
 	if (state != INITIALIZED) {
-		return;
+		return "Not initialized";
 	}
-
 	if (paused) {
 		paused = false;
 	} else {
-		nativeStartDecoding(id);
+		if (!nativeStartDecoding(id)) {
+			return "failed to start decoding";
+		}
+		state = DECODING;
 	}
-
 	global_start_time = Time::get_singleton()->get_unix_time_from_system();
-
-	state = DECODING;
+	return "";
 }
 
 void FFmpegNode::stop() {
-	if (nativeGetDecoderState(id) != DECODING) {
-		return;
-	}
-
 	nativeDestroyDecoder(id);
-
+	//nativeScheduleDestroyDecoder(id);
+	id = -1;
 	video_current_time = 0.0f;
 	audio_current_time = 0.0f;
 	paused = false;
 
-	state = INITIALIZED;
+	state = DONE;
 }
 
 bool FFmpegNode::is_playing() const {
-	return !paused && state == DECODING;
+	return !paused && state != DONE;
 }
 
 void FFmpegNode::set_paused(bool p_paused) {
@@ -130,7 +129,7 @@ float FFmpegNode::get_playback_position() const {
 }
 
 void FFmpegNode::seek(float p_time) {
-	if (state != DECODING && state != END_OF_FILE) {
+	if (state != DECODING && state != END_OF_FILE && state != DONE) {
 		return;
 	}
 
@@ -149,8 +148,9 @@ void FFmpegNode::seek(float p_time) {
 }
 
 void FFmpegNode::_process(float delta) {
+	// TODO: Implement audio.
+	/*
 	if (state > INITIALIZED && state != SEEK && state != END_OF_FILE) {
-		// TODO: Implement audio.
 		unsigned char *audio_data = nullptr;
 		int audio_size = 0;
 		double audio_time = nativeGetAudioData(id, &audio_data, audio_size);
@@ -158,6 +158,7 @@ void FFmpegNode::_process(float delta) {
 			nativeFreeAudioData(id);
 		}
 	}
+	*/
 
 	switch (state) {
 		case LOADING: {
@@ -217,10 +218,10 @@ void FFmpegNode::_process(float delta) {
 						nativeSetVideoTime(id, video_current_time);
 					} else {
 						state = END_OF_FILE;
+						break;
 					}
 				}
 			}
-
 			if (nativeIsVideoBufferEmpty(id) && !nativeIsEOF(id)) {
 				hang_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
 				state = BUFFERING;
@@ -234,9 +235,12 @@ void FFmpegNode::_process(float delta) {
 			}else{
 				image = Image::create(width, height, false, Image::FORMAT_RGBA8);
 				texture = ImageTexture::create_from_image(image);
+				stop();
 			}
 		} break;
 	}
+	//clean up decoders
+	//nativeCleanDestroyedDecoders();
 }
 
 // TODO: Implement audio.
@@ -266,7 +270,6 @@ FFmpegNode::FFmpegNode() {
 	image = Ref<Image>(memnew(Image()));
 
 	// TODO: Implement audio.
-
 // 	player = memnew(AudioStreamPlayer);
 // 	add_child(player);
 // 	Ref<AudioStreamGenerator> generator = Ref<AudioStreamGenerator>(memnew(AudioStreamGenerator));
@@ -275,7 +278,7 @@ FFmpegNode::FFmpegNode() {
 }
 
 FFmpegNode::~FFmpegNode() {
-	nativeScheduleDestroyDecoder(id);
+	nativeDestroyDecoder(id);
 }
 
 void FFmpegNode::_bind_methods() {

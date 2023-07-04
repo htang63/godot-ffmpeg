@@ -22,6 +22,7 @@ private:
 		SEEK,
 		BUFFERING,
 		END_OF_FILE,
+		DONE,
 	};
 
 	// TODO: Implement audio.
@@ -61,11 +62,11 @@ protected:
 	static void _bind_methods();
 
 public:
-	bool load_path(String path);
+	String load_path(String path);
 	void load_path_async(String path);
 
 	void stop();
-	void play();
+	String play();
 
 	bool is_playing() const;
 

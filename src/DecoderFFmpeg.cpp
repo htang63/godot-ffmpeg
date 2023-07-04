@@ -116,8 +116,10 @@ bool DecoderFFmpeg::init(const char* filePath) {
 
 		//mVideoFrames.swap(decltype(mVideoFrames)());
 	}
-
+	
+	//disable audio for now
 	/* Audio initialization */
+	/*
 	int audioStreamIndex = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
 	if (audioStreamIndex < 0) {
 		LOG("audio stream not found. \n");
@@ -146,9 +148,10 @@ bool DecoderFFmpeg::init(const char* filePath) {
 			printErrorMsg(errorCode);
 			return false;
 		}
-
+		
 		//mAudioFrames.swap(decltype(mAudioFrames)());
 	}
+	*/
 
 	mIsInitialized = true;
 
@@ -252,7 +255,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
-		LOG("Video frame not available. \n");
+		//LOG("Video frame not available. \n");
         *frameData = nullptr;
 		return -1;
 	}
@@ -264,7 +267,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData) {
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;
 	mVideoInfo.lastTime = timeInSec;
 
-    printf("mVideoInfo.lastTime %f\n", timeInSec);
+    //printf("mVideoInfo.lastTime %f\n", timeInSec);
 
 	return timeInSec;
 }
@@ -307,7 +310,7 @@ void DecoderFFmpeg::seek(double time) {
 		flushBuffer(&mVideoFrames, &mVideoMutex);
 		mVideoInfo.lastTime = -1;
 	}
-	
+	/*
 	if (mAudioInfo.isEnabled) {
 		if (mAudioCodecContext != nullptr) {
 			avcodec_flush_buffers(mAudioCodecContext);
@@ -315,6 +318,7 @@ void DecoderFFmpeg::seek(double time) {
 		flushBuffer(&mAudioFrames, &mAudioMutex);
 		mAudioInfo.lastTime = -1;
 	}
+	*/
 }
 
 int DecoderFFmpeg::getMetaData(char**& key, char**& value) {
@@ -361,7 +365,7 @@ void DecoderFFmpeg::destroy() {
 	}
 	
 	flushBuffer(&mVideoFrames, &mVideoMutex);
-	flushBuffer(&mAudioFrames, &mAudioMutex);
+	//flushBuffer(&mAudioFrames, &mAudioMutex);
 	
 	mVideoCodec = nullptr;
 	mAudioCodec = nullptr;
@@ -371,7 +375,7 @@ void DecoderFFmpeg::destroy() {
 	av_packet_unref(&mPacket);
 	
 	memset(&mVideoInfo, 0, sizeof(VideoInfo));
-	memset(&mAudioInfo, 0, sizeof(AudioInfo));
+	//memset(&mAudioInfo, 0, sizeof(AudioInfo));
 	
 	mIsInitialized = false;
 	mIsAudioAllChEnabled = false;
@@ -398,38 +402,13 @@ void DecoderFFmpeg::updateVideoFrame() {
 	AVFrame* srcFrame = av_frame_alloc();
 	clock_t start = clock();
 	int ret;
-	bool isFrameReady = false;
-
-    ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
-	av_packet_unref(&mPacket);
-    if (ret < 0) {
-        LOG("Error sending a packet for decoding\n");
+	int isFrameAvailable = 0;
+	if (avcodec_decode_video2(mVideoCodecContext, srcFrame, &isFrameAvailable, &mPacket) < 0) {
+		LOG("Error processing data. \n");
 		return;
-    }	
-	ret = 0;
-	while (ret >= 0) {
-		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
-        if (ret == AVERROR_EOF || ret == 0)
-			isFrameReady = true;
-			break;
-		if (ret < 0){
-			LOG("Error during decoding\n");
-			av_frame_free(&srcFrame);
-			return;
-		}
-		if (ret == AVERROR(EAGAIN)) {
-			av_read_frame(mAVFormatContext, &mPacket);
-			ret = avcodec_send_packet(mVideoCodecContext, &mPacket);
-			av_packet_unref(&mPacket);
-			if (ret < 0) {
-				LOG("Error sending a packet for decoding\n");
-				av_frame_free(&srcFrame);
-				return;
-			}
-		}
 	}
-
-	if (isFrameReady){
+	
+	if (isFrameAvailable > 0){
 		int width = srcFrame->width;
 		int height = srcFrame->height;
 
@@ -461,7 +440,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 		dstFrame->format = dstFormat;
 		dstFrame->width = srcFrame->width;
 		dstFrame->height = srcFrame->height;
-		LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
+		//LOG("updateVideoFrame = %f\n", (float)(clock() - start) / CLOCKS_PER_SEC);
 		std::lock_guard<std::mutex> lock(mVideoMutex);
 		mVideoFrames.push(dstFrame);
 		av_frame_free(&srcFrame);
