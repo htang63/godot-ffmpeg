@@ -27,7 +27,7 @@ void FFmpegNode::_init_media() {
 }
 
 String FFmpegNode::load_path(String path) {
-	if (nativeGetDecoderState(id) > 1) {
+	if (id != -1 && nativeGetDecoderState(id) > 1) {
 		return "decoder still active";
 	}
 
@@ -50,7 +50,7 @@ String FFmpegNode::load_path(String path) {
 }
 
 void FFmpegNode::load_path_async(String path) {
-	if (nativeGetDecoderState(id) > 1) {
+	if (id != -1 && nativeGetDecoderState(id) > 1) {
 		emit_signal("async_loaded", false);
 		return;
 	}
@@ -80,6 +80,9 @@ String FFmpegNode::play() {
 }
 
 void FFmpegNode::stop() {
+	if (id == -1) {
+		return;
+	}
 	nativeDestroyDecoder(id);
 	//nativeScheduleDestroyDecoder(id);
 	id = -1;
@@ -91,7 +94,7 @@ void FFmpegNode::stop() {
 }
 
 bool FFmpegNode::is_playing() const {
-	return !paused && state != DONE;
+	return !paused && state == DECODING;
 }
 
 void FFmpegNode::set_paused(bool p_paused) {
@@ -148,6 +151,9 @@ void FFmpegNode::seek(float p_time) {
 }
 
 void FFmpegNode::_process(float delta) {
+	if (id == -1) {
+		return;
+	}
 	// TODO: Implement audio.
 	/*
 	if (state > INITIALIZED && state != SEEK && state != END_OF_FILE) {
@@ -278,6 +284,9 @@ FFmpegNode::FFmpegNode() {
 }
 
 FFmpegNode::~FFmpegNode() {
+	if (id == -1) {
+		return;
+	}
 	nativeDestroyDecoder(id);
 }
 
