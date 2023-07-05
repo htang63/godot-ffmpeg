@@ -32,6 +32,9 @@ std::list<std::shared_ptr<VideoContext>> videoContexts;
 typedef std::list<std::shared_ptr<VideoContext>>::iterator VideoContextIter;
 
 bool getVideoContext(int id, std::shared_ptr<VideoContext>& videoCtx) {
+	if (id == -1) {
+		return false;
+	}
 	for (VideoContextIter it = videoContexts.begin(); it != videoContexts.end(); it++) {
 		if ((*it)->id == id) {
 			videoCtx = *it;
@@ -119,10 +122,13 @@ int nativeCreateDecoder(const char* filePath, int& id) {
 
 	videoContexts.push_back(videoCtx);
 
-	return 0;
+	return videoCtx->id;
 }
 
 int nativeGetDecoderState(int id) {
+	if (id == -1) {
+		return -1;
+	}
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { 
 		return -1; 
@@ -132,6 +138,9 @@ int nativeGetDecoderState(int id) {
 }
 
 bool nativeStartDecoding(int id) {
+	if (id == -1) {
+		return false;
+	}
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { 
 		return false; 

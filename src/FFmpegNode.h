@@ -33,7 +33,7 @@ private:
 	Ref<Image> image;
 	PackedByteArray image_buffer;
 	
-	int id = 0;
+	int id = -1;
 	int state = UNINITIALIZED;
 
 	bool first_frame = true;
